@@ -83,10 +83,7 @@ function oauth_create_user($serviceName, $userData) {
 == Links
 
 . https://github.com/shannah/xataface[Xataface]
-. https://github.com/shannah/xataface-module-oauth-facebook[Facebook OAuth module]
-. https://github.com/shannah/xataface-module-oauth-twitter[Twitter OAuth module]
-. https://github.com/shannah/xataface-module-oauth-linkedin[LinkedIn OAuth module]
-. https://github.com/shannah/xataface-module-oauth-instagram[Instagram OAuth module]
+. https://github.com/shannah/xataface-module-oauth[Xataface OAuth module]
 
 
 
