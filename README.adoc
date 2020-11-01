@@ -1,0 +1,92 @@
+== Xataface Facebook OAuth Module
+
+This module adds support for Facebook OAuth login in your Xataface application.
+
+=== Installation
+
+1. Download the https://github.com/shannah/xataface-module-oauth[OAuth module] and copy it to `modules/oauth`.
+2. Download this repository and copy it to `modules/oauth_facebook`
+3. Add entries to your conf.ini file for both the `oauth` and `oauth_facebook` modules:
++
+[source,ini]
+----
+[_modules]
+	modules_oauth=modules/oauth/oauth.php
+	modules_oauth_facebook=modules/oauth_facebook/oauth_facebook.php
+----
+4. Add `[oauth_facebook]` section to conf.ini file as follows.  
++
+[source,ini]
+----
+[oauth_facebook]
+    client_id=XXXXXXXXXXX
+    client_secret=XXXXXXXXXXXX
+----
+5. Add a VARCHAR column to your app's users table to store the facebook user ID for a given user.  This table should be tagged with the `facebook_id=1` directive.  E.g.
++
+.Creating facebook_id column to store Facebook User ID.  Note that the field dosn't *need* to be called anything in particular.  We call it "facebook_id" here but you could also call it "foobarfoo" if you wanted to.
+[source,sql]
+----
+ALTER TABLE users ADD COLUMN facebook_id VARCHAR(100) NULL;
+----
++
+.users fields.ini file.  
+[source,ini]
+----
+[facebook_id]
+	widget:type=hidden
+	facebook_id=1
+----
+
+At this point, you should be able to log into your app using Facebook.  The Login page includes a link called "Login with Facebook".  However there are a few housekeeping details to consider before you're done.
+
+== Account Creation
+
+If the user is logging in with Facebook for the first time, you won't yet know which local app account (if any) should be associated with the facebook account.  The Xataface OAuth module tries to be smart about this but for all but the most trivial setups, you'll need to give it some help.
+
+**`oauth_create_user()`**
+
+ The recommended approach is to implement the `oauth_create_user($serviceName, $userData)` method in your application delegate class.  
+
+.Example oauth_create_user() implementation.
+[source,php]
+----
+function oauth_create_user($serviceName, $userData) {
+	$required = ['email', 'id'];
+	foreach ($required as $key) {
+		if (!@$userData[$key]) {
+			return PEAR::raiseError('Failed to get field '.$key.' from OAuth provider '.$serviceName);
+		}
+	}
+	$username = $userData['username'];
+	$email = $userData['email'];
+	
+	$existing = df_get_record('users', ['email' => '='. $email]);
+	if ($existing) {
+		return PEAR::raiseError("There is an existing account with that email address.  Please log in with your email address first to connect it to your account.");
+	}
+	$user = new Dataface_Record('users', []);
+	$user->setValues([
+		'email' => $email,
+		'username' => $email
+	]);
+	$idField = $serviceName.'_id';
+	$user->setValue($idField, $userData['id']);
+	$res = $user->save();
+	if (PEAR::isError($res)) {
+		return $res;
+	}
+	return $user;
+}
+----
+
+== Links
+
+. https://github.com/shannah/xataface[Xataface]
+. https://github.com/shannah/xataface-module-oauth-facebook[Facebook OAuth module]
+. https://github.com/shannah/xataface-module-oauth-twitter[Twitter OAuth module]
+. https://github.com/shannah/xataface-module-oauth-linkedin[LinkedIn OAuth module]
+. https://github.com/shannah/xataface-module-oauth-instagram[Instagram OAuth module]
+
+
+
